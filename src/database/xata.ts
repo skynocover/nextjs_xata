@@ -78,6 +78,23 @@ const tables = [
       { name: "completed", type: "bool", notNull: true, defaultValue: "false" },
     ],
   },
+  {
+    name: "folders",
+    columns: [
+      { name: "name", type: "string" },
+      { name: "parentId", type: "string" },
+      { name: "ownerId", type: "string" },
+    ],
+  },
+  {
+    name: "files",
+    columns: [
+      { name: "name", type: "string" },
+      { name: "content", type: "file[]" },
+      { name: "folderId", type: "string" },
+      { name: "ownerId", type: "string" },
+    ],
+  },
 ] as const;
 
 export type SchemaTables = typeof tables;
@@ -106,6 +123,12 @@ export type NextauthSessionsRecord = NextauthSessions & XataRecord;
 export type Todos = InferredTypes["todos"];
 export type TodosRecord = Todos & XataRecord;
 
+export type Folders = InferredTypes["folders"];
+export type FoldersRecord = Folders & XataRecord;
+
+export type Files = InferredTypes["files"];
+export type FilesRecord = Files & XataRecord;
+
 export type DatabaseSchema = {
   nextauth_users: NextauthUsersRecord;
   nextauth_accounts: NextauthAccountsRecord;
@@ -114,6 +137,8 @@ export type DatabaseSchema = {
   nextauth_users_sessions: NextauthUsersSessionsRecord;
   nextauth_sessions: NextauthSessionsRecord;
   todos: TodosRecord;
+  folders: FoldersRecord;
+  files: FilesRecord;
 };
 
 const DatabaseClient = buildClient();
