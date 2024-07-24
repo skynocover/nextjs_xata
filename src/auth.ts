@@ -17,17 +17,19 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     // },
   },
   callbacks: {
+    async jwt({ token, account, profile }) {
+      if (account) {
+        token.sub = `${account.provider}_${account.providerAccountId}`;
+      }
+      return token;
+    },
+
     async session({ session, token, user }) {
       // 確保 token.sub 包含用戶的 ID
       if (token.sub) {
         session.user.id = token.sub;
       }
       return session;
-    },
-
-    authorized: async ({ auth }) => {
-      // Logged in users are authenticated, otherwise redirect to login page
-      return !!auth;
     },
   },
 });

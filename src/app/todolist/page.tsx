@@ -2,22 +2,24 @@
 import { useSession, signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 const TodoListPage = () => {
-  const { data: session } = useSession();
-  const [todos, setTodos] = useState<any[]>([]);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
+  const [todos, setTodos] = useState<any[]>([]);
   const [newTodo, setNewTodo] = useState<string>("");
 
   useEffect(() => {
     if (session) {
       axios.get("/api/todos").then((response: any) => setTodos(response.data));
+    } else {
+      if (status !== "loading") {
+        router.push("/api/auth/signin");
+      }
     }
   }, [session]);
-
-  useEffect(() => {
-    console.log({ todos });
-  }, [todos]);
 
   const addTodo = async (title: string) => {
     const { data } = await axios.post("/api/todos", {
@@ -37,19 +39,6 @@ const TodoListPage = () => {
     await axios.delete("/api/todos", { data: { id } });
     setTodos(todos.filter((todo) => todo.xata_id !== id));
   };
-
-  if (!session) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-        <button
-          onClick={() => signIn("google")}
-          className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
-        >
-          Sign in with Google
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 text-gray-900 dark:text-gray-100">

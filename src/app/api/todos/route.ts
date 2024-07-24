@@ -10,6 +10,7 @@ export interface NextAuthRequest extends NextRequest {
 
 export const GET = handleAuth(async (req, res) => {
   const userId = req.auth?.user?.id;
+
   try {
     const todos = await xata.db.todos.filter({ userId }).getAll();
     return NextResponse.json(todos, { status: 200 });
