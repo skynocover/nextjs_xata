@@ -1,6 +1,6 @@
-// app/drive/page.tsx
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { Session } from "next-auth";
 
 import FileList from "@/components/FileList";
 import { xata } from "@/database/xataClient";
@@ -8,6 +8,7 @@ import FolderList from "@/components/FolderList";
 import UploadButton from "@/components/UploadButton";
 import CreateFolderButton from "@/components/CreateFolderButton";
 import Breadcrumb from "@/components/Breadcrumb";
+import { XataClient } from "@/database/xata";
 
 export default async function DrivePage({
   searchParams,
@@ -20,32 +21,11 @@ export default async function DrivePage({
   }
   const currentFolderId = searchParams.folder || null;
 
-  let temp: any = {};
-  if (currentFolderId === null) {
-    temp.$notExists = "parentId";
-  }
-  const folders = await xata.db.folders
-    .select(["name", "xata_id"])
-    .filter({
-      ownerId: session.user.id,
-      parentId: currentFolderId,
-      ...temp,
-    })
-    .getMany();
-
-  let temp2: any = {};
-  if (currentFolderId === null) {
-    temp2.$notExists = "folderId";
-  }
-
-  const files = await xata.db.files
-    .select(["content.signedUrl", "content.id", "name"])
-    .filter({
-      ownerId: session.user.id,
-      folderId: currentFolderId,
-      ...temp2,
-    })
-    .getMany();
+  const { files, folders } = await getFoldersAndFiles(
+    xata,
+    session,
+    currentFolderId
+  );
 
   const currentFolder = currentFolderId
     ? await xata.db.folders.read(currentFolderId)
@@ -108,4 +88,52 @@ const getFolderPath = async (
   }
 
   return path;
+};
+
+type Filter = {
+  ownerId: string;
+  [key: string]: any;
+};
+
+// 創建一個輔助函數來生成過濾器
+const createFilter = (
+  ownerId: string,
+  parentIdOrFolderId: string | null,
+  idField: string
+): Filter => {
+  const filter: Filter = { ownerId };
+  if (parentIdOrFolderId === null) {
+    filter[`$notExists`] = idField;
+  } else {
+    filter[idField] = parentIdOrFolderId;
+  }
+  return filter;
+};
+
+// 主函數
+const getFoldersAndFiles = async (
+  xata: XataClient,
+  session: Session,
+  currentFolderId: string | null
+) => {
+  const folderFilter = createFilter(
+    session.user!.id!,
+    currentFolderId,
+    "parentId"
+  );
+  const fileFilter = createFilter(
+    session.user!.id!,
+    currentFolderId,
+    "folderId"
+  );
+
+  const [folders, files] = await Promise.all([
+    xata.db.folders.select(["name", "xata_id"]).filter(folderFilter).getMany(),
+    xata.db.files
+      .select(["content.signedUrl", "content.id", "name"])
+      .filter(fileFilter)
+      .getMany(),
+  ]);
+
+  return { folders, files };
 };

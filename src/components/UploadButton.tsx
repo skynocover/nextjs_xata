@@ -23,13 +23,12 @@ export default function UploadButton({ userId, folderId }: UploadButtonProps) {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("userId", userId);
     if (folderId) {
       formData.append("folderId", folderId);
     }
 
     try {
-      const { data } = await axios.post("/api/upload", formData);
+      const { data } = await axios.post("/api/files", formData);
       if (data) {
         console.log(data);
         router.refresh();
