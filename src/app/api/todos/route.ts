@@ -1,26 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Session } from "next-auth";
 
-import { auth } from "@/auth";
+import { auth, handleAuth } from "@/auth";
 import { xata } from "@/database/xataClient";
 
 export interface NextAuthRequest extends NextRequest {
   auth: Session | null;
 }
-
-const handleAuth = (
-  handler: (req: NextAuthRequest, res: any) => Promise<NextResponse>
-) => {
-  return auth(async (req, res) => {
-    if (!req.auth) {
-      return NextResponse.json(
-        { message: "Not authenticated" },
-        { status: 401 }
-      );
-    }
-    return handler(req, res);
-  });
-};
 
 export const GET = handleAuth(async (req, res) => {
   const userId = req.auth?.user?.id;
