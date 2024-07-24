@@ -1,5 +1,5 @@
-// app/api/upload/route.ts
 import { NextRequest, NextResponse } from "next/server";
+
 import { xata } from "@/database/xataClient";
 import { XataFile } from "@xata.io/client";
 
@@ -17,8 +17,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const encodedFileName = encodeURIComponent(file.name);
+    const newFile = new File([file], encodedFileName, { type: file.type });
+
     await xata.db.files.create({
-      content: [XataFile.fromBlob(file)],
+      content: [XataFile.fromBlob(newFile)],
       name: file.name,
       folderId: folderId ? folderId : null,
       ownerId: userId,

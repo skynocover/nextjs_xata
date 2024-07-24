@@ -1,39 +1,6 @@
-// pages/api/files.ts
 import { xata } from "@/database/xataClient";
-import { NextRequest, NextResponse } from "next/server";
-import { Session } from "next-auth";
-import { auth } from "@/auth";
-
-export interface NextAuthRequest extends NextRequest {
-  auth: Session | null;
-}
-
-const handleAuth = (
-  handler: (req: NextAuthRequest, res: any) => Promise<NextResponse>
-) => {
-  return auth(async (req, res) => {
-    if (!req.auth) {
-      return NextResponse.json(
-        { message: "Not authenticated" },
-        { status: 401 }
-      );
-    }
-    return handler(req, res);
-  });
-};
-
-export const GET = handleAuth(async (req, res) => {
-  const userId = req.auth?.user?.id;
-  try {
-    const files = await xata.db.files.filter({ ownerId: userId }).getAll();
-    return NextResponse.json(files, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: "Error fetching todos", error: error.message },
-      { status: 500 }
-    );
-  }
-});
+import { NextResponse } from "next/server";
+import { handleAuth } from "@/auth";
 
 export const POST = handleAuth(async (req, res) => {
   const userId = req.auth?.user?.id;
@@ -51,6 +18,46 @@ export const POST = handleAuth(async (req, res) => {
   } catch (error: any) {
     return NextResponse.json(
       { message: "Error creating todo", error: error.message },
+      { status: 500 }
+    );
+  }
+});
+
+export const DELETE = handleAuth(async (req, res) => {
+  const userId = req.auth?.user?.id;
+  try {
+    const { searchParams } = new URL(req.url);
+    const fileId = searchParams.get("id");
+
+    if (!fileId) {
+      return NextResponse.json(
+        { message: "File ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const file = await xata.db.files.read(fileId);
+
+    if (!file) {
+      return NextResponse.json({ message: "File not found" }, { status: 404 });
+    }
+
+    if (file.ownerId !== userId) {
+      return NextResponse.json(
+        { message: "Unauthorized to delete this file" },
+        { status: 403 }
+      );
+    }
+
+    await xata.db.files.delete(fileId);
+
+    return NextResponse.json(
+      { message: "File deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: "Error deleting file", error: error.message },
       { status: 500 }
     );
   }

@@ -1,8 +1,8 @@
-// components/UploadButton.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 type UploadButtonProps = {
   userId: string;
@@ -29,15 +29,10 @@ export default function UploadButton({ userId, folderId }: UploadButtonProps) {
     }
 
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
+      const { data } = await axios.post("/api/upload", formData);
+      if (data) {
+        console.log(data);
         router.refresh();
-      } else {
-        console.error("Upload failed");
       }
     } catch (error) {
       console.error("Upload error:", error);

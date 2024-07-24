@@ -1,16 +1,14 @@
-// components/CreateFolderButton.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 type CreateFolderButtonProps = {
-  userId: string;
   parentFolderId: string | null;
 };
 
 export default function CreateFolderButton({
-  userId,
   parentFolderId,
 }: CreateFolderButtonProps) {
   const [isCreating, setIsCreating] = useState(false);
@@ -23,23 +21,14 @@ export default function CreateFolderButton({
     setIsCreating(true);
 
     try {
-      const response = await fetch("/api/folders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: folderName,
-          userId,
-          parentFolderId,
-        }),
+      const { data } = await axios.post("/api/folders", {
+        name: folderName,
+        parentFolderId,
       });
 
-      if (response.ok) {
+      if (data) {
         setFolderName("");
         router.refresh();
-      } else {
-        console.error("Folder creation failed");
       }
     } catch (error) {
       console.error("Folder creation error:", error);
@@ -55,7 +44,7 @@ export default function CreateFolderButton({
         value={folderName}
         onChange={(e) => setFolderName(e.target.value)}
         placeholder="New folder name"
-        className="border rounded px-2 py-1"
+        className="border rounded px-2 py-1 text-black"
       />
       <button
         onClick={handleCreateFolder}

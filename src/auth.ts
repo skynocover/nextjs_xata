@@ -1,11 +1,9 @@
 import NextAuth from "next-auth";
-// import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import { XataAdapter } from "@auth/xata-adapter";
-import { XataClient } from "@/database/xata"; // Or wherever you've chosen for the generated client
+import { NextRequest, NextResponse } from "next/server";
+import { Session } from "next-auth";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
-  // adapter: XataAdapter(xataClient),
   providers: [Google],
   logger: {
     // error: (code, ...message) => {
@@ -33,3 +31,21 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export interface NextAuthRequest extends NextRequest {
+  auth: Session | null;
+}
+
+export const handleAuth = (
+  handler: (req: NextAuthRequest, res: any) => Promise<NextResponse>
+) => {
+  return auth(async (req, res) => {
+    if (!req.auth) {
+      return NextResponse.json(
+        { message: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+    return handler(req, res);
+  });
+};

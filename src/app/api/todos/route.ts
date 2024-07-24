@@ -1,11 +1,8 @@
-// pages/api/todos/index.ts
-import type { NextApiRequest } from "next";
 import { NextRequest, NextResponse } from "next/server";
+import type { Session } from "next-auth";
 
 import { auth } from "@/auth";
 import { xata } from "@/database/xataClient";
-
-import type { Session } from "next-auth";
 
 export interface NextAuthRequest extends NextRequest {
   auth: Session | null;
